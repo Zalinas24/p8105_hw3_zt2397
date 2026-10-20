@@ -89,10 +89,8 @@ January is much colder than July. Most stations have average temperatures betwee
 A few values stand out as outliers. The most noticeble is a station in July late 1980's with an average temperature of about 14 Celcius, much lower than the other stations that month. January also has a couple of unusually low averages, including about -13 C in early 1980's and -12 C in the midd 200's.
 
 ### P1c
-```{r Question 1c}
-## Panel 1: max vs. min temperature for the full dataset.
-## A scatterplot would overplot millions of points, so geom_hex() is used instead,
-## as it groups points into hexagons and colors each one by how many points it contains.
+```{r question_1c, fig.width = 8, fig.asp = 1.8}
+# for Panel 1, a scatterplot would overplot millions of points, so geom_hex() is used instead as it groups points into hexagons and colors each one by how many points it contains.
 tmax_tmin_p = 
   ny_noaa_df |> 
   ggplot(aes(x = tmin, y = tmax)) + 
@@ -104,8 +102,7 @@ tmax_tmin_p =
   ) + 
   theme(legend.position = "right")  # move the count legend to the side so its numbers don't overlap
 
-## Panel 2: distribution of snowfall by year.
-## Snowfall is in inches, so 100 mm is converted to inches (100 / 25.4) for the filter.
+## For panel 2, Snowfall is in inches, so 100 mm is converted to inches (100 / 25.4) for the filter.
 ## factor(year) treats each year as its own category, giving one ridge per year.
 library(ggridges)
 
@@ -114,15 +111,14 @@ snow_p =
   filter(snow > 0, snow < 100 / 25.4) |> 
   ggplot(aes(x = snow, y = factor(year))) + 
   geom_density_ridges(scale = .85) + 
+  scale_y_discrete(breaks = c("1981", "1985", "1990", "1995", "2000", "2005", "2010")) +  # label every 5 years
   labs(
     title = "Snowfall by year (0–100 mm, shown in inches)",
     x = "Snowfall (in)",
     y = "Year"
   )
 
-## Combine the two plots into one figure, stacked vertically with "/".
-## plot_layout(heights = c(1, 2)) makes the snowfall panel twice as tall,
-## since it needs room for 30 years of labels.
+## Combine the two plots into one figure, stacked vertically with "/"
 library(patchwork)
 
 tmax_tmin_p / snow_p + plot_layout(heights = c(1, 2))
@@ -130,12 +126,15 @@ tmax_tmin_p / snow_p + plot_layout(heights = c(1, 2))
 
 ## Problem 2 (P2)
 
+### P2 load, tidy, merge, and organize
 ```{r Problem 2}
 covar_df = 
-
+# Imports the data and skips the lines with notes
   read_csv("./data/nhanes_covar.csv", skip = 4) |> 
   janitor::clean_names() |> 
+# Removes participants under 21
   filter(age >= 21) |> 
+# Removes any missing data
   drop_na() |> 
   mutate(
     sex = case_when(
@@ -153,5 +152,44 @@ covar_df =
       levels = c("Less than high school", "High school equivalent", "More than high school")
     )
   )
+# Imports accelometer data 
+accel_df = 
+  read_csv("./data/nhanes_accel.csv") |> 
+  janitor::clean_names() |> 
+  pivot_longer(
+    min1:min1440,
+    names_to = "minute",
+    names_prefix = "min",
+    values_to = "mims"
+  ) |> 
+  mutate(minute = as.numeric(minute))
+
+# Merges data by ID of the participants
+nhanes_df = 
+  left_join(covar_df, accel_df, by = "seqn")
 ```
+### P2 reader friendly table + Age Dist. Visualization
+```{r P2 reader friendly table}
+covar_df |> 
+  count(education, sex) |> 
+  pivot_wider(
+    names_from = sex,
+    values_from = n
+  ) |> 
+  knitr::kable(
+    col.names = c("Education", "Men", "Women")
+    
+## Age distribution visualization
+  )
+covar_df |> 
+  ggplot(aes(x = education, y = age, fill = sex)) + 
+  geom_boxplot() + 
+  labs(
+    title = "Age distribution by education and sex",
+    x = "Education",
+    y = "Age (years)",
+    fill = "Sex"
+  )
+```
+The 
 
