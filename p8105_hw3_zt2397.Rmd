@@ -9,15 +9,15 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Problem 1
-### Setup
+## Problem 1 (P1)
+### P1 Setup
 ```{r}
 library(p8105.datasets)
 library(tidyverse)
 
 data("ny_noaa")
 ```
-### Description
+### P1 Description
 ```{r Description}
 
 str(ny_noaa)
@@ -29,7 +29,7 @@ instead of numbers, so they need to be converted before we can use them.
 
 A lot of data is missing. The temperature columns have the most gaps, with 1,134,358 days missing `tmax` and 1,134,420 missing `tmin`, which is close to half the dataset. Snow depth is missing for 591,786 days, snowfall for 381,221, and rain for 145,838. This is probably because many stations only measure rain and snow, not temperature. There are also a few values that don't make sense, like negative snowfall and record days with impossibly large amounts of rain and snow, which are probably recording mistakes.
 
-### Question 1a
+### P1a
 ```{r Question 1a}
 ny_noaa_df = 
   ny_noaa |> 
@@ -49,8 +49,8 @@ ny_noaa_df |>
 ```
 The most common values are 0 and NA, indicating that most days either had no snowfall or had missing snowfall data. The next most frequent numerical values are 0.98, 0.51, and 2.01 inches, corresponding to approximately 1, 0.5, and 2 inches of snowfall, respectively. This suggest that snowfall commonly occurs in small amoutns.
 
-### Question 1b
-#### Setup
+### P1b
+#### P1b Setup
 ```{r Question 1b Setup}
 ## Set the size of figures created by R and how they appear in the document
 knitr::opts_chunk$set(
@@ -62,7 +62,7 @@ knitr::opts_chunk$set(
 ## Set a default theme for all plots
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
-#### 1b Plot Chunk
+#### P1b Plot Chunk
 ```{r Question 1b Plot Chunk}
 ny_noaa_df |> 
   filter(month %in% c(1, 7)) |> 
@@ -88,10 +88,11 @@ January is much colder than July. Most stations have average temperatures betwee
 
 A few values stand out as outliers. The most noticeble is a station in July late 1980's with an average temperature of about 14 Celcius, much lower than the other stations that month. January also has a couple of unusually low averages, including about -13 C in early 1980's and -12 C in the midd 200's.
 
-### Question 1c
+### P1c
 ```{r Question 1c}
 ## Panel 1: max vs. min temperature for the full dataset.
-## A scatterplot would overplot millions of points, so geom_hex() is used instead as it groups points into hexagons and colors each one by how many points it contains.
+## A scatterplot would overplot millions of points, so geom_hex() is used instead,
+## as it groups points into hexagons and colors each one by how many points it contains.
 tmax_tmin_p = 
   ny_noaa_df |> 
   ggplot(aes(x = tmin, y = tmax)) + 
@@ -119,8 +120,38 @@ snow_p =
     y = "Year"
   )
 
-## Combine the two plots into one figure, stacked vertically with "/"
+## Combine the two plots into one figure, stacked vertically with "/".
+## plot_layout(heights = c(1, 2)) makes the snowfall panel twice as tall,
+## since it needs room for 30 years of labels.
 library(patchwork)
 
-tmax_tmin_p / snow_p
+tmax_tmin_p / snow_p + plot_layout(heights = c(1, 2))
 ```
+
+## Problem 2 (P2)
+
+```{r Problem 2}
+covar_df = 
+
+  read_csv("./data/nhanes_covar.csv", skip = 4) |> 
+  janitor::clean_names() |> 
+  filter(age >= 21) |> 
+  drop_na() |> 
+  mutate(
+    sex = case_when(
+      sex == 1 ~ "male",
+      sex == 2 ~ "female"
+    ),
+    sex = factor(sex, levels = c("male", "female")),
+    education = case_when(
+      education == 1 ~ "Less than high school",
+      education == 2 ~ "High school equivalent",
+      education == 3 ~ "More than high school"
+    ),
+    education = factor(
+      education, 
+      levels = c("Less than high school", "High school equivalent", "More than high school")
+    )
+  )
+```
+
