@@ -84,6 +84,7 @@ ny_noaa_df |>
     y = "Average max temperature (°C)"
   )
 ```
+
 January is much colder than July. Most stations have average temperatures between -5 and 5 °C in January, compared with 25 to 30 C in July. January temperatures also vary more from year to year, ranging from around -10 to 10 C, while July temperatures stay within a narrower range.
 
 A few values stand out as outliers. The most noticeble is a station in July late 1980's with an average temperature of about 14 Celcius, much lower than the other stations that month. January also has a couple of unusually low averages, including about -13 C in early 1980's and -12 C in the midd 200's.
@@ -191,5 +192,55 @@ covar_df |>
     fill = "Sex"
   )
 ```
-The 
+
+About half of the participants without missing demographic data have more than a high school education, for both men and women. The less than high school group is fairly evenly split between men and women. Lastly, the high school equivalent group has more men than women.
+
+Looking at the age distributions, people with less than a high school education have a median age of around 60, with little difference between men and women. In the high school equivalent group, women are noticeably older than men, with a median age of around 60 compared with the early 50s for men. In the more than high school group, men and women have similar age distributions, with men slightly older (mid 40s) than women (early 40s). This group is also the youngest overall.
+
+### P2 total activity variable + Plot
+```{r P2 total activty}
+#This adds up the activity for all of the participants
+total_activity_df = 
+  nhanes_df |> 
+  group_by(seqn, sex, age, education) |> 
+  summarize(total_activity = sum(mims))
+```
+```{r Plot}
+# This one plots activity against age with men and women
+total_activity_df |> 
+  ggplot(aes(x = age, y = total_activity, color = sex)) + 
+  geom_point(alpha = .5) + 
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ education) + 
+  labs(
+    title = "Total daily activity by age, sex, and education",
+    x = "Age (years)",
+    y = "Total activity (MIMS)",
+    color = "Sex"
+  )
+```
+
+In all of the groups the total activity tends to decrease with age. For those with less than high school we see a spike in their 60's bigger for males. Those with high school equivalent we see a spike in their 40s bigger for females, and a smaller spike in their 70 only observable for females, though females in general have a higher actvity. Among those with more than high school the activity is more constant, with males showing a small spike in thier 50's and females in their 60's, though similarly to the previous one, females have an overall higher activity. 
+
+### P2 24-hour activity time course
+```{r 24 hours}
+nhanes_df |> 
+## Changes minutes to hours
+  mutate(hour = minute / 60) |> 
+  ggplot(aes(x = hour, y = mims, color = sex)) + 
+  geom_line(aes(group = seqn), alpha = .1) + 
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ education) + 
+  scale_x_continuous(breaks = c(0, 6, 12, 18, 24)) + 
+  labs(
+    title = "24-hour activity by education and sex",
+    x = "Hour of the day",
+    y = "Activity (MIMS)",
+    color = "Sex"
+  )
+```
+
+This shows that from midnight to 6am, most people show no activity. However, regardless of sex or education, the activity levels seem to go up from 6am to noon, then plateau, and then 7pm they drop. Though, females do show slightly more activity than men in those with more than hs education. 
+
+## Problem 3 (P3)
 
